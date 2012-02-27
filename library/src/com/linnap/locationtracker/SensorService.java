@@ -1,6 +1,5 @@
 package com.linnap.locationtracker;
 
-import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -23,9 +22,9 @@ public class SensorService extends Service {
 	 * notification.icon = R.drawable.icon;
 	 * PendingIntent openActivity = PendingIntent.getActivity(this, 0, new Intent(this, YourMainActivity.class), 0);
 	 * notification.setLatestEventInfo(this, "YourAppName", "Location Tracking Active", openActivity);
+	 * startForeground(1234, notification);
 	 */
-	public Notification backgroundServiceNotification() {
-		return null;
+	public void startForegroundWithNotification() {
 	}
 	
 	/**
@@ -65,9 +64,7 @@ public class SensorService extends Service {
 		sensorThread.start();
 		
 		// Keep service in foreground to avoid it being killed by the OS.
-		Notification notification = backgroundServiceNotification();
-		if (notification != null)
-			startForeground(NOTIFICATION_ID, notification);
+		startForegroundWithNotification();
 	}
 
 	public int onStartCommand(Intent intent, int flags, int startId) {
