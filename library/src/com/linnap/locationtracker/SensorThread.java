@@ -1,18 +1,17 @@
 package com.linnap.locationtracker;
 
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
 public class SensorThread extends Thread {
 	
-	Context context;
+	SensorService service;
 	Handler handler;
 	SensorScheduler scheduler;
 	
-	public SensorThread(Context context) {
-		this.context = context;
+	public SensorThread(SensorService service) {
+		this.service = service;
 		this.handler = null;  // Initialized once the thread is running.
 		this.scheduler = null;  // Needs handler.		
 	}
@@ -20,7 +19,7 @@ public class SensorThread extends Thread {
 	public void run() {
 		Looper.prepare();
 		handler = new Handler();
-		scheduler = new SensorScheduler(context, Looper.myLooper(), handler);
+		scheduler = new SensorScheduler(service, Looper.myLooper(), handler);
 		scheduler.start();		
 		Looper.loop();
 	}

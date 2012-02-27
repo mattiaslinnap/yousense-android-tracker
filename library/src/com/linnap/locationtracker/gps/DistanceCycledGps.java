@@ -11,12 +11,13 @@ import android.os.Looper;
 import android.os.SystemClock;
 
 import com.linnap.locationtracker.SensorConfig;
+import com.linnap.locationtracker.SensorService;
 
 public class DistanceCycledGps implements LocationListener {
 
 	enum State { HIGH, LOW, OFF };
 	
-	Context context;
+	SensorService service;
 	Looper looper;
 	Handler handler;
 	GpsMovementListener listener;
@@ -25,15 +26,15 @@ public class DistanceCycledGps implements LocationListener {
 	long lastGpsFixMillis;
 	GpsHistory history;
 	
-	public DistanceCycledGps(Context context, Looper looper, Handler handler, GpsMovementListener listener) {
-		this.context = context;
+	public DistanceCycledGps(SensorService service, Looper looper, Handler handler, GpsMovementListener listener) {
+		this.service = service;
 		this.looper = looper;
 		this.handler = handler;
 		this.listener = listener;
-		this.locationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
+		this.locationManager = (LocationManager)service.getSystemService(Context.LOCATION_SERVICE);
 		this.state = State.OFF;
 		this.lastGpsFixMillis = 0;
-		this.history = new GpsHistory(context);
+		this.history = new GpsHistory(service);
 	}
 	
 	public synchronized void start() {
@@ -52,7 +53,7 @@ public class DistanceCycledGps implements LocationListener {
 	// Internals
 	
 	private synchronized void switchToState(State newState) {
-//		AppGlobals.getLog(context).log("GPS switching from " + state + " to " + newState);
+		service.log("GPS switching from " + state + " to " + newState);
 		state = newState;
 		
 		history.clear();  // Must clear history, to make sure the new history is based on expected fix frequency.
@@ -91,7 +92,7 @@ public class DistanceCycledGps implements LocationListener {
 				if (history.shouldSwitchToHighSpeed())
 					switchToState(State.HIGH);
 				else if (history.shouldReportStationary()) {
-//					AppGlobals.getLog(context).log("GPS is actually stationary.");
+					service.log("GPS is actually stationary.");
 					listener.noGpsMovement();
 				}
 			}
@@ -99,16 +100,16 @@ public class DistanceCycledGps implements LocationListener {
 	}
 
 	public synchronized void onProviderDisabled(String provider) {
-//		AppGlobals.getLog(context).log("GPS onProviderDisabled()");
+		service.log("GPS onProviderDisabled()");
 		listener.noGpsMovement();
 	}
 
 	public synchronized void onProviderEnabled(String provider) {
-//		AppGlobals.getLog(context).log("GPS onProviderEnabled()");
+		service.log("GPS onProviderEnabled()");
 	}
 
 	public synchronized void onStatusChanged(String provider, int status, Bundle extras) {
-//		AppGlobals.getLog(context).log("GPS onStatusChanged to " + status);
+		service.log("GPS onStatusChanged to " + status);
 		if (status != LocationProvider.AVAILABLE) {			
 			listener.noGpsMovement();
 		}
@@ -121,7 +122,7 @@ public class DistanceCycledGps implements LocationListener {
 			synchronized (DistanceCycledGps.this) {
 				if (state != State.OFF) {
 					if (shouldGiveup()) {
-//						AppGlobals.getLog(context).log("GPS giveup timeout reached");
+						service.log("GPS giveup timeout reached");
 						listener.noGpsMovement();
 					}
 					

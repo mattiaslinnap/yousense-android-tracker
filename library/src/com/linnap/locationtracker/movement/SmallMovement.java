@@ -1,17 +1,17 @@
 package com.linnap.locationtracker.movement;
 
-import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
 import com.linnap.locationtracker.SensorConfig;
+import com.linnap.locationtracker.SensorService;
 import com.linnap.locationtracker.movement.DutyCycledAccelerometer.MovementDetectedListener;
 import com.linnap.locationtracker.wifi.WifiPlaceChange;
 import com.linnap.locationtracker.wifi.WifiPlaceChange.MaybePlaceChangedListener;
 
 public class SmallMovement implements MovementDetectedListener, MaybePlaceChangedListener {
 
-	Context context;
+	SensorService service;
 	Handler handler;
 	SmallMovementDistanceListener listener;
 	DutyCycledAccelerometer accel;
@@ -19,13 +19,13 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 	boolean running;
 	int accelMovementPeriods;
 	
-	public SmallMovement(Context context, Handler handler, SmallMovementDistanceListener listener) {
-		this.context = context;
+	public SmallMovement(SensorService service, Handler handler, SmallMovementDistanceListener listener) {
+		this.service = service;
 		this.handler = handler;
 		this.listener = listener;
-		this.accel = new DutyCycledAccelerometer(context, handler, this);
+		this.accel = new DutyCycledAccelerometer(service, handler, this);
 		if (SensorConfig.MOVEMENT_USES_WIFI) {
-			this.placeChange = new WifiPlaceChange(context, handler, this);
+			this.placeChange = new WifiPlaceChange(service, handler, this);
 		}
 		this.running = false;
 		this.accelMovementPeriods = 0;
@@ -58,14 +58,14 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 	
 	public synchronized void movementDetected(long durationMillis) {
 		if (running) {
-//			AppGlobals.getLog(context).log("SM movementDetected()");
+			service.log("SM movementDetected()");
 			accelMovementPeriods += 1;
 			if (accelMovementPeriods >= SensorConfig.MOVEMENT_MIN_ACCEL_MOVEMENT_PERIODS) {
 				if (SensorConfig.MOVEMENT_USES_WIFI) {
-//					AppGlobals.getLog(context).log("SM starting WiFi comparison");
+					service.log("SM starting WiFi comparison");
 					placeChange.startComparison();
 				} else {
-//					AppGlobals.getLog(context).log("SM not using WiFi, maybe moved");
+					service.log("SM not using WiFi, maybe moved");
 					listener.maybeSmallMovement();
 				}
 			}
@@ -79,12 +79,12 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 		if (running) {
 			if (changed) {
 				// Wifi agrees with place change. Report.
-//				AppGlobals.getLog(context).log("SM maybe WiFi change");
+				service.log("SM maybe WiFi change");
 				listener.maybeSmallMovement();
 				// Do not accel periods, stopping movement detection is up to SensorScheduler.
 			} else {
 				// No actual place change. Walking around in the same room. Reset distance.
-//				AppGlobals.getLog(context).log("SM WiFi not changed");
+				service.log("SM WiFi not changed");
 				accelMovementPeriods = 0;
 			}
 		}
