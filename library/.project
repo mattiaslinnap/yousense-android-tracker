@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>LocationTracker</name>
+	<name>locationtracker</name>
 	<comment></comment>
 	<projects>
-		<project>AndroidShortcuts</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
