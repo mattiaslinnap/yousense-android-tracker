@@ -46,6 +46,7 @@ public class SensorService extends Service {
 	
 	SensorThread sensorThread;
 	WakeLock wakeLock;
+	private volatile static boolean running;
 	
 	public IBinder onBind(Intent intent) {
 		// No binding.
@@ -54,6 +55,7 @@ public class SensorService extends Service {
 
 	public void onCreate() {
 		super.onCreate();
+		running = true;
 		
 		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SensorConfig.TAG);
 		wakeLock.setReferenceCounted(false);
@@ -81,6 +83,11 @@ public class SensorService extends Service {
 		wakeLock = null;
 		
 		stopForeground(true);
+		running = false;
+	}
+	
+	public static boolean isRunning() {
+		return running;
 	}
 
 
