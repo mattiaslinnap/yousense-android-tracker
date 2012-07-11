@@ -6,6 +6,7 @@ import android.os.Looper;
 
 import com.linnap.locationtracker.gps.DistanceCycledGps;
 import com.linnap.locationtracker.gps.DistanceCycledGps.GpsMovementListener;
+import com.linnap.locationtracker.gps.LocationFix;
 import com.linnap.locationtracker.movement.SmallMovement;
 import com.linnap.locationtracker.movement.SmallMovement.SmallMovementDistanceListener;
 
@@ -73,7 +74,9 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 	}
 	
 	public synchronized void locationChanged(Location location) {
-		service.locationChanged(location);
+		LocationFix fix = new LocationFix(location);
+		SensorService.lastKnownLocation = fix;
+		service.locationChanged(fix);
 	}
 	
 }

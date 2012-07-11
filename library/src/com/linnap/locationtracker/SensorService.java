@@ -3,11 +3,12 @@ package com.linnap.locationtracker;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
+
+import com.linnap.locationtracker.gps.LocationFix;
 
 public class SensorService extends Service {
 
@@ -30,7 +31,7 @@ public class SensorService extends Service {
 	/**
 	 * Called when a new GPS fix is acquired. Do stuff with it.
 	 */
-	public synchronized void locationChanged(Location location) {
+	public synchronized void locationChanged(LocationFix location) {
 	}
 	
 	/**
@@ -40,9 +41,19 @@ public class SensorService extends Service {
 		Log.d(SensorConfig.TAG, message);
 	}
 	
+	//// Last known state API
+	static LocationFix lastKnownLocation = null;
+	public static LocationFix getLastKnownLocation() {
+		return lastKnownLocation;
+	}
+	public static void mockLastKnownLocation(LocationFix mockLocation) {
+		lastKnownLocation = mockLocation;
+		// TODO: Refactor SensorService to make this send events too.
+	}
+	
 	//// Internals
 	
-	public static final int NOTIFICATION_ID = 1;
+	//public static final int NOTIFICATION_ID = 1;
 	
 	SensorThread sensorThread;
 	WakeLock wakeLock;
@@ -56,6 +67,7 @@ public class SensorService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		running = true;
+		lastKnownLocation = null;
 		
 		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SensorConfig.TAG);
 		wakeLock.setReferenceCounted(false);
@@ -83,6 +95,7 @@ public class SensorService extends Service {
 		wakeLock = null;
 		
 		stopForeground(true);
+		lastKnownLocation = null;
 		running = false;
 	}
 	

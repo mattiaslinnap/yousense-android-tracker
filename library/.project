@@ -3,6 +3,7 @@
 	<name>locationtracker</name>
 	<comment></comment>
 	<projects>
+		<project>androidshortcuts</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
