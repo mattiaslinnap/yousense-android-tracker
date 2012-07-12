@@ -5,14 +5,14 @@ import java.util.ArrayDeque;
 import android.location.Location;
 
 import com.linnap.locationtracker.SensorConfig;
-import com.linnap.locationtracker.SensorService;
+import com.linnap.locationtracker.LocationTrackerService;
 
 public class GpsHistory {
 
-	SensorService service;
+	LocationTrackerService service;
 	ArrayDeque<Location> history;
 	
-	public GpsHistory(SensorService service) {
+	public GpsHistory(LocationTrackerService service) {
 		this.service = service;
 		this.history = new ArrayDeque<Location>(SensorConfig.GPS_HISTORY_SIZE);
 	}

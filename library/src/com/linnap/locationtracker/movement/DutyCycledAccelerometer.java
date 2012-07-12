@@ -6,8 +6,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
+import android.util.FloatMath;
 
-import com.linnap.locationtracker.StatsAccumulator;
 import com.linnap.locationtracker.SensorConfig;
 
 public class DutyCycledAccelerometer implements SensorEventListener {
@@ -80,7 +80,7 @@ public class DutyCycledAccelerometer implements SensorEventListener {
 	}
 
 	public void onSensorChanged(SensorEvent event) {
-		magnitude.add(Math.sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2]));
+		magnitude.add(FloatMath.sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2]));
 	}
 	
 	

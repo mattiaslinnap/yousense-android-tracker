@@ -1,9 +1,10 @@
-package com.linnap.locationtracker;
+package com.linnap.locationtracker.schedule;
 
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.linnap.locationtracker.LocationTrackerService;
 import com.linnap.locationtracker.gps.DistanceCycledGps;
 import com.linnap.locationtracker.gps.DistanceCycledGps.GpsMovementListener;
 import com.linnap.locationtracker.gps.LocationFix;
@@ -12,7 +13,7 @@ import com.linnap.locationtracker.movement.SmallMovement.SmallMovementDistanceLi
 
 public class SensorScheduler implements SmallMovementDistanceListener, GpsMovementListener {
 
-	SensorService service;
+	LocationTrackerService service;
 	Looper looper;  // Thread looper where to post events. Comes from SensorThread.Looper.
 	Handler handler;  // Handler where to post delayed events. Comes from SensorThread.Looper.
 	
@@ -21,7 +22,7 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 	boolean running;
 	boolean gpsTracking;
 	
-	public SensorScheduler(SensorService service, Looper looper, Handler handler) {
+	public SensorScheduler(LocationTrackerService service, Looper looper, Handler handler) {
 		this.service = service;
 		this.looper = looper;
 		this.handler = handler;
@@ -33,27 +34,35 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 	}
 	
 	public synchronized void start() {
-		service.log("SensorScheduler start()");
 		running = true;
 		gpsTracking = false;
 		smallMovement.start();
 	}
 	
 	public synchronized void stop() {
-		service.log("SensorScheduler stop()");
 		running = false;
 		gpsTracking = false;
 		smallMovement.stop();
 		distanceCycledGps.stop();
 	}
+	
+	public synchronized void pokeGpsHigh() {
+		if (running) {
+			if (!gpsTracking) {
+				smallMovement.stop();
+				gpsTracking = true;
+			}
+			distanceCycledGps.startOrPokeHigh(); // Switch it into HIGH mode no matter what it is doing now.
+		} else {
+			service.log("Gps poked while SensorScheduler is stopped!");
+		}
+	}
 
 	/// Callbacks from sensors
 
 	public synchronized void maybeSmallMovement() {
-		service.log("SensorSch. maybeSmallMovement()");
 		if (running) {
 			if (!gpsTracking) {
-				service.log("SensorScheduler starting GPS tracking");
 				smallMovement.stop();
 				distanceCycledGps.start();
 				gpsTracking = true;
@@ -62,10 +71,8 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 	}
 
 	public synchronized void noGpsMovement() {
-		service.log("SensorSch. noGpsMovement()");
 		if (running) {
 			if (gpsTracking) {
-				service.log("SensorScheduler stopping GPS tracking");
 				smallMovement.start();
 				distanceCycledGps.stop();
 				gpsTracking = false;
@@ -74,9 +81,7 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 	}
 	
 	public synchronized void locationChanged(Location location) {
-		LocationFix fix = new LocationFix(location);
-		SensorService.lastKnownLocation = fix;
-		service.locationChanged(fix);
+		service.gpsFix(new LocationFix(location));
 	}
 	
 }

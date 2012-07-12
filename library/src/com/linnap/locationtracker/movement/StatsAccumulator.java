@@ -1,4 +1,4 @@
-package com.linnap.locationtracker;
+package com.linnap.locationtracker.movement;
 
 /**
  * Fixed-size buffer for calculating statistical summaries (average, variance) of data.
@@ -7,13 +7,13 @@ package com.linnap.locationtracker;
 public class StatsAccumulator {
 
 	int size;
-	double[] buffer;
+	float[] buffer;
 	int count;
-	double sum;
+	float sum;
 	
 	public StatsAccumulator(int size) {
 		this.size = size;
-		this.buffer = new double[size];
+		this.buffer = new float[size];
 		this.count = 0;
 		this.sum = 0;
 	}
@@ -23,20 +23,20 @@ public class StatsAccumulator {
 		sum = 0;
 	}
 	
-	public void add(double value) {
+	public void add(float value) {
 		if (count < size - 1) {
 			buffer[count++] = value;
 			sum += value;
 		}
 	}
 	
-	public double mean() {
+	public float mean() {
 		return sum / count;
 	}
 	
-	public double variance() {
-		double m = mean(); 
-		double squaredDifference = 0;
+	public float variance() {
+		float m = mean(); 
+		float squaredDifference = 0;
 		for (int i = 0; i < count; ++i)
 			squaredDifference += (buffer[i] - m) * (buffer[i] - m);
 		return squaredDifference / count;

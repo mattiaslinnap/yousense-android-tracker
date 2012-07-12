@@ -26,4 +26,9 @@ public class LocationFix {
 		this.bearing = location.hasBearing() ? location.getBearing() : null;
 		this.speed = location.hasSpeed() ? location.getSpeed() : null;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("%.5f north, %.5f east at %d", lat, lng, time);
+	}
 }

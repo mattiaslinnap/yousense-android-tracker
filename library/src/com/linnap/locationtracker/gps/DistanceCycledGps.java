@@ -11,13 +11,13 @@ import android.os.Looper;
 import android.os.SystemClock;
 
 import com.linnap.locationtracker.SensorConfig;
-import com.linnap.locationtracker.SensorService;
+import com.linnap.locationtracker.LocationTrackerService;
 
 public class DistanceCycledGps implements LocationListener {
 
 	enum State { HIGH, LOW, OFF };
 	
-	SensorService service;
+	LocationTrackerService service;
 	Looper looper;
 	Handler handler;
 	GpsMovementListener listener;
@@ -26,7 +26,7 @@ public class DistanceCycledGps implements LocationListener {
 	long lastGpsFixMillis;
 	GpsHistory history;
 	
-	public DistanceCycledGps(SensorService service, Looper looper, Handler handler, GpsMovementListener listener) {
+	public DistanceCycledGps(LocationTrackerService service, Looper looper, Handler handler, GpsMovementListener listener) {
 		this.service = service;
 		this.looper = looper;
 		this.handler = handler;
@@ -38,6 +38,11 @@ public class DistanceCycledGps implements LocationListener {
 	}
 	
 	public synchronized void start() {
+		switchToState(State.HIGH);
+	}
+	
+	public synchronized void startOrPokeHigh() {
+		service.logEvent("gps_poke");
 		switchToState(State.HIGH);
 	}
 	
@@ -53,13 +58,18 @@ public class DistanceCycledGps implements LocationListener {
 	// Internals
 	
 	private synchronized void switchToState(State newState) {
+		switch (newState) {
+		case OFF: service.logEvent("gps_off"); break;
+		case LOW: service.logEvent("gps_low"); break;
+		case HIGH: service.logEvent("gps_high"); break;
+		}
 		service.log("GPS switching from " + state + " to " + newState);
 		state = newState;
 		
 		history.clear();  // Must clear history, to make sure the new history is based on expected fix frequency.
 		advanceGiveupTimer();
 		handler.removeCallbacks(giveupTimer);
-		locationManager.removeUpdates(this);
+		locationManager.removeUpdates(this);  // TODO: don't do this unless actually changing delay.
 		
 		// Set GPS sensor to work at expected rate - or not at all.		
 		if (state == State.HIGH || state == State.LOW) {

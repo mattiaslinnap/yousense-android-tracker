@@ -1,4 +1,7 @@
-package com.linnap.locationtracker;
+package com.linnap.locationtracker.schedule;
+
+import com.linnap.locationtracker.LocationTrackerService;
+import com.linnap.locationtracker.SensorConfig;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -6,28 +9,32 @@ import android.util.Log;
 
 public class SensorThread extends Thread {
 	
-	SensorService service;
+	LocationTrackerService service;
 	Handler handler;
-	SensorScheduler scheduler;
-	
-	public SensorThread(SensorService service) {
+	SensorScheduler sensorScheduler;
+
+	public SensorThread(LocationTrackerService service) {
 		this.service = service;
 		this.handler = null;  // Initialized once the thread is running.
-		this.scheduler = null;  // Needs handler.		
+		this.sensorScheduler = null; // Needs handler and looper
 	}
 	
 	public void run() {
 		Looper.prepare();
 		handler = new Handler();
-		scheduler = new SensorScheduler(service, Looper.myLooper(), handler);
-		scheduler.start();		
+		sensorScheduler = new SensorScheduler(service, Looper.myLooper(), handler);
+		sensorScheduler.start();
 		Looper.loop();
 	}
 	
 	/// Public access. Can be called from other threads.
 	
+	public void pokeGpsHigh() {
+		sensorScheduler.pokeGpsHigh();
+	}
+	
 	public void quit() {
-		scheduler.stop();
+		sensorScheduler.stop();
 		Looper looper = handler.getLooper();
 		if (looper != null)
 			looper.quit();
