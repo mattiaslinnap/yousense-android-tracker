@@ -11,13 +11,13 @@ import android.os.Looper;
 import android.os.SystemClock;
 
 import com.linnap.locationtracker.SensorConfig;
-import com.linnap.locationtracker.LocationTrackerService;
+import com.linnap.locationtracker.LocationTrackerServiceX;
 
 public class DistanceCycledGps implements LocationListener {
 
 	enum State { HIGH, LOW, OFF };
 	
-	LocationTrackerService service;
+	LocationTrackerServiceX service;
 	Looper looper;
 	Handler handler;
 	GpsMovementListener listener;
@@ -26,7 +26,7 @@ public class DistanceCycledGps implements LocationListener {
 	long lastGpsFixMillis;
 	GpsHistory history;
 	
-	public DistanceCycledGps(LocationTrackerService service, Looper looper, Handler handler, GpsMovementListener listener) {
+	public DistanceCycledGps(LocationTrackerServiceX service, Looper looper, Handler handler, GpsMovementListener listener) {
 		this.service = service;
 		this.looper = looper;
 		this.handler = handler;

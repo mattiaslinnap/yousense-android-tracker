@@ -1,6 +1,7 @@
 package com.linnap.locationtracker.gps;
 
 import android.location.Location;
+import android.os.Bundle;
 
 /**
  * Location class that can be nicely serialized with Gson.
@@ -26,9 +27,41 @@ public class LocationFix {
 		this.bearing = location.hasBearing() ? location.getBearing() : null;
 		this.speed = location.hasSpeed() ? location.getSpeed() : null;
 	}
+	
+	public LocationFix(Bundle b) {
+		if (b != null) {
+			this.time = b.getLong("time", 0);
+			this.lat = b.getDouble("lat", 0.0);
+			this.lng = b.getDouble("lng", 0.0);
+			if (b.containsKey("accuracy"))
+				this.accuracy = b.getFloat("accuracy", 0.0f);
+			if (b.containsKey("altitude"))
+				this.altitude = b.getDouble("altitude", 0.0);
+			if (b.containsKey("bearing"))
+				this.bearing = b.getFloat("bearing", 0.0f);
+			if (b.containsKey("speed"))
+				this.speed = b.getFloat("speed", 0.0f);
+		}
+	}
 
 	@Override
 	public String toString() {
 		return String.format("%.5f north, %.5f east at %d", lat, lng, time);
+	}
+	
+	public Bundle toBundle() {
+		Bundle b = new Bundle();
+		b.putLong("time", time);
+		b.putDouble("lat", lat);
+		b.putDouble("lng", lng);
+		if (accuracy != null)
+			b.putFloat("accuracy", accuracy.floatValue());
+		if (altitude != null)
+			b.putDouble("altitude", altitude.doubleValue());
+		if (bearing != null)
+			b.putFloat("bearing", bearing.floatValue());
+		if (speed != null)
+			b.putFloat("speed", speed.floatValue());		
+		return b;
 	}
 }

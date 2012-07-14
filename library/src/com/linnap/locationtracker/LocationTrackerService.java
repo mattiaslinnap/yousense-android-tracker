@@ -1,87 +1,73 @@
 package com.linnap.locationtracker;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
 
 import com.linnap.locationtracker.gps.LocationFix;
-import com.linnap.locationtracker.schedule.SensorThread;
+import com.linnap.locationtracker.schedule.SensorScheduler;
 
 public class LocationTrackerService extends Service {
 
+	//// Send these actions with startService()
+	public static final String ACTION_START_BACKGROUND = "com.linnap.locationtracker.intent.ACTION_START_BACKGROUND";
+	public static final String ACTION_STOP_BACKGROUND = "com.linnap.locationtracker.intent.ACTION_STOP_BACKGROUND";
+	public static final String ACTION_LOCK_GPS = "com.linnap.locationtracker.intent.ACTION_LOCK_GPS";
+	public static final String ACTION_UNLOCK_GPS = "com.linnap.locationtracker.intent.ACTION_UNLOCK_GPS";
+	public static final String ACTION_MOCK_FIX = "com.linnap.locationtracker.intent.ACTION_MOCK_FIX";
+	
 	//// Binding API. Override this with custom EventBindings to link to the location tracker.
 	public EventBindings getEventBindings() {
 		return new EventBindings();
 	};
 	
-	//// Last known state API
-		
-	public static LocationFix getLastGoodLocation() {
-		return lastGoodLocation;
+	//// Static API. Get static info on current state.
+	public static final LocationFix getLastGoodFix() {
+		return lastGoodFix;
 	}
 	
-	public static boolean isRunning() {
-		return running;
-	}
-	
-	//// Control api is accessible via TrackerControlBinder.
-	
-	
-		
 	//// Internals
 	
-	private volatile static boolean running = false;
-	private volatile static LocationFix lastGoodLocation = null;
+	private static LocationFix lastGoodFix = null; 
+	EventBindings eventBindings;
+	ExpectedState expectedState;
+	SensorScheduler sensorScheduler;
 	
-	EventBindings eventBindings;	
-	WakeLock wakeLock;
-	SensorThread sensorThread;
-		
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		running = true;
-		lastGoodLocation = null;
-		
+		lastGoodFix = null;
+		expectedState = new ExpectedState();
 		eventBindings = getEventBindings();
-		
-		wakeLock = ((PowerManager)getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SensorConfig.TAG);
-		wakeLock.setReferenceCounted(false);
-		wakeLock.acquire();
-		
-		logEvent("start");
-		sensorThread = new SensorThread(this);
-		sensorThread.start();
-		
-		// Keep service in foreground to avoid it being killed by the OS.
-		eventBindings.startForegroundWithNotification();
+		sensorScheduler = new SensorScheduler(this);
 	}
 	
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		expectedState.intentReceived(intent.getAction());
+		sensorScheduler.switchToState(expectedState.getExpectedState());
 		
-		logEvent("stop");
-		sensorThread.quit();
+		if (ACTION_MOCK_FIX.equals(intent.getAction()) {
+			mockGpsFix(new LocationFix(intent.getExtras()));
+		}
 		
-		wakeLock.release();
-		wakeLock = null;
-		
-		stopForeground(true);
-		
-		running = false;
-		lastGoodLocation = null;
+		return START_STICKY;
+	}	
+	
+	@Override
+	public IBinder onBind(Intent intent) {
+		return null;  // No binding, it breaks startup logic.
 	}
 	
-	public void pokeGpsHigh() {
-		sensorThread.pokeGpsHigh();
-	}
+	//// Internal callbacks for locationtracker modules.
 	
 	public void gpsFix(LocationFix fix) {
-		lastGoodLocation = fix;
+		lastGoodFix = fix;
 		eventBindings.gpsFix(fix);
 	}
 	
@@ -96,22 +82,5 @@ public class LocationTrackerService extends Service {
 	
 	public void log(String message) {
 		eventBindings.log(message);
-	}
-	
-	@Override
-	public IBinder onBind(Intent intent) {
-		log("Binding to LocationTracker");
-		return new TrackerControlBinder(this);
-	}
-	
-	@Override
-	public boolean onUnbind(Intent intent) {
-		log("All clients unbound from LocationTracker");
-		return false;
-	}
-
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		return START_REDELIVER_INTENT;  // If killed, maybe restart the service again if possible.
 	}
 }

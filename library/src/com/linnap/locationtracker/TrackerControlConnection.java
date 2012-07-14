@@ -11,7 +11,7 @@ import android.os.IBinder;
  */
 public class TrackerControlConnection implements ServiceConnection {
 
-	LocationTrackerService service;
+	LocationTrackerServiceX service;
 	boolean pokeHighOnConnected;
 	
 	public TrackerControlConnection(boolean pokeHighOnConnected) {

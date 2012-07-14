@@ -1,6 +1,6 @@
 package com.linnap.locationtracker.schedule;
 
-import com.linnap.locationtracker.LocationTrackerService;
+import com.linnap.locationtracker.LocationTrackerServiceX;
 import com.linnap.locationtracker.SensorConfig;
 
 import android.os.Handler;
@@ -9,11 +9,11 @@ import android.util.Log;
 
 public class SensorThread extends Thread {
 	
-	LocationTrackerService service;
+	LocationTrackerServiceX service;
 	Handler handler;
 	SensorScheduler sensorScheduler;
 
-	public SensorThread(LocationTrackerService service) {
+	public SensorThread(LocationTrackerServiceX service) {
 		this.service = service;
 		this.handler = null;  // Initialized once the thread is running.
 		this.sensorScheduler = null; // Needs handler and looper

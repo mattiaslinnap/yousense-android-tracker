@@ -1,9 +1,8 @@
 package com.linnap.locationtracker.schedule;
 
 import android.location.Location;
-import android.os.Handler;
-import android.os.Looper;
 
+import com.linnap.locationtracker.ExpectedState.State;
 import com.linnap.locationtracker.LocationTrackerService;
 import com.linnap.locationtracker.gps.DistanceCycledGps;
 import com.linnap.locationtracker.gps.DistanceCycledGps.GpsMovementListener;
@@ -14,23 +13,26 @@ import com.linnap.locationtracker.movement.SmallMovement.SmallMovementDistanceLi
 public class SensorScheduler implements SmallMovementDistanceListener, GpsMovementListener {
 
 	LocationTrackerService service;
-	Looper looper;  // Thread looper where to post events. Comes from SensorThread.Looper.
-	Handler handler;  // Handler where to post delayed events. Comes from SensorThread.Looper.
+	State state;
 	
 	SmallMovement smallMovement;
 	DistanceCycledGps distanceCycledGps;
 	boolean running;
 	boolean gpsTracking;
 	
-	public SensorScheduler(LocationTrackerService service, Looper looper, Handler handler) {
+	
+	public SensorScheduler(LocationTrackerService service) {
 		this.service = service;
-		this.looper = looper;
-		this.handler = handler;
+		this.state = State.STOPPED;
 		
 		this.smallMovement = new SmallMovement(service, handler, this);
 		this.distanceCycledGps = new DistanceCycledGps(service, looper, handler, this);
 		this.running = false;
 		this.gpsTracking = false;
+	}
+	
+	public synchronized void switchToState(State newState) {
+		
 	}
 	
 	public synchronized void start() {
