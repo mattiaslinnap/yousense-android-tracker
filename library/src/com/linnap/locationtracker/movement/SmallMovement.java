@@ -3,15 +3,15 @@ package com.linnap.locationtracker.movement;
 import android.os.Handler;
 import android.util.Log;
 
+import com.linnap.locationtracker.LocationTrackerService;
 import com.linnap.locationtracker.SensorConfig;
-import com.linnap.locationtracker.LocationTrackerServiceX;
 import com.linnap.locationtracker.movement.DutyCycledAccelerometer.MovementDetectedListener;
 import com.linnap.locationtracker.wifi.WifiPlaceChange;
 import com.linnap.locationtracker.wifi.WifiPlaceChange.MaybePlaceChangedListener;
 
 public class SmallMovement implements MovementDetectedListener, MaybePlaceChangedListener {
 
-	LocationTrackerServiceX service;
+	LocationTrackerService service;
 	Handler handler;
 	SmallMovementDistanceListener listener;
 	DutyCycledAccelerometer accel;
@@ -19,9 +19,9 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 	boolean running;
 	int accelMovementPeriods;
 	
-	public SmallMovement(LocationTrackerServiceX service, Handler handler, SmallMovementDistanceListener listener) {
+	public SmallMovement(LocationTrackerService service, SmallMovementDistanceListener listener) {
 		this.service = service;
-		this.handler = handler;
+		this.handler = new Handler();
 		this.listener = listener;
 		this.accel = new DutyCycledAccelerometer(service, handler, this);
 		if (SensorConfig.MOVEMENT_USES_WIFI) {

@@ -7,6 +7,7 @@ import android.os.Bundle;
  * Location class that can be nicely serialized with Gson.
  */
 public class LocationFix {
+	public String provider;
 	public long time;
 	public double lat;
 	public double lng;
@@ -19,6 +20,7 @@ public class LocationFix {
 	}
 	
 	public LocationFix(Location location) {
+		this.provider = location.getProvider();
 		this.time = location.getTime();
 		this.lat = location.getLatitude();
 		this.lng = location.getLongitude();
@@ -30,6 +32,7 @@ public class LocationFix {
 	
 	public LocationFix(Bundle b) {
 		if (b != null) {
+			this.provider = b.getString("provider");
 			this.time = b.getLong("time", 0);
 			this.lat = b.getDouble("lat", 0.0);
 			this.lng = b.getDouble("lng", 0.0);
@@ -51,6 +54,7 @@ public class LocationFix {
 	
 	public Bundle toBundle() {
 		Bundle b = new Bundle();
+		b.putString("provider",  provider);
 		b.putLong("time", time);
 		b.putDouble("lat", lat);
 		b.putDouble("lng", lng);

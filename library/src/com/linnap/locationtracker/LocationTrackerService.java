@@ -52,7 +52,7 @@ public class LocationTrackerService extends Service {
 		expectedState.intentReceived(intent.getAction());
 		sensorScheduler.switchToState(expectedState.getExpectedState());
 		
-		if (ACTION_MOCK_FIX.equals(intent.getAction()) {
+		if (ACTION_MOCK_FIX.equals(intent.getAction())) {
 			mockGpsFix(new LocationFix(intent.getExtras()));
 		}
 		
@@ -72,15 +72,24 @@ public class LocationTrackerService extends Service {
 	}
 	
 	public void mockGpsFix(LocationFix fix) {
-		logEvent("gps_mock");
+		fix.provider = "mock";
+		event("gps_mock");
 		gpsFix(fix);
 	}
 	
-	public void logEvent(String tag) {
+	public void event(String tag) {
 		eventBindings.event(tag);
 	}
 	
 	public void log(String message) {
 		eventBindings.log(message);
+	}
+	
+	public void log(String message, Throwable throwable) {
+		eventBindings.log(message, throwable);
+	}
+	
+	public void startForegroundWithNotification() {
+		eventBindings.startForegroundWithNotification();
 	}
 }

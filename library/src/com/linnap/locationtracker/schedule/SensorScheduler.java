@@ -1,11 +1,16 @@
 package com.linnap.locationtracker.schedule;
 
+import android.content.Context;
 import android.location.Location;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 
-import com.linnap.locationtracker.ExpectedState.State;
+import com.linnap.locationtracker.ExpectedState.TrackerState;
 import com.linnap.locationtracker.LocationTrackerService;
+import com.linnap.locationtracker.SensorConfig;
 import com.linnap.locationtracker.gps.DistanceCycledGps;
 import com.linnap.locationtracker.gps.DistanceCycledGps.GpsMovementListener;
+import com.linnap.locationtracker.gps.DistanceCycledGps.GpsState;
 import com.linnap.locationtracker.gps.LocationFix;
 import com.linnap.locationtracker.movement.SmallMovement;
 import com.linnap.locationtracker.movement.SmallMovement.SmallMovementDistanceListener;
@@ -13,70 +18,68 @@ import com.linnap.locationtracker.movement.SmallMovement.SmallMovementDistanceLi
 public class SensorScheduler implements SmallMovementDistanceListener, GpsMovementListener {
 
 	LocationTrackerService service;
-	State state;
+	TrackerState state;
 	
+	WakeLock wakeLock;
 	SmallMovement smallMovement;
 	DistanceCycledGps distanceCycledGps;
-	boolean running;
 	boolean gpsTracking;
-	
 	
 	public SensorScheduler(LocationTrackerService service) {
 		this.service = service;
-		this.state = State.STOPPED;
+		this.state = TrackerState.STOPPED;
 		
-		this.smallMovement = new SmallMovement(service, handler, this);
-		this.distanceCycledGps = new DistanceCycledGps(service, looper, handler, this);
-		this.running = false;
+		this.wakeLock = ((PowerManager)service.getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SensorConfig.TAG);
+		this.wakeLock.setReferenceCounted(false);
+		this.smallMovement = new SmallMovement(service, this);
+		this.distanceCycledGps = new DistanceCycledGps(service, this);
 		this.gpsTracking = false;
 	}
 	
-	public synchronized void switchToState(State newState) {
+	public synchronized void switchToState(TrackerState newState) {
+		// TODO: events
 		
-	}
-	
-	public synchronized void start() {
-		running = true;
-		gpsTracking = false;
-		smallMovement.start();
-	}
-	
-	public synchronized void stop() {
-		running = false;
-		gpsTracking = false;
-		smallMovement.stop();
-		distanceCycledGps.stop();
-	}
-	
-	public synchronized void pokeGpsHigh() {
-		if (running) {
-			if (!gpsTracking) {
-				smallMovement.stop();
-				gpsTracking = true;
-			}
-			distanceCycledGps.startOrPokeHigh(); // Switch it into HIGH mode no matter what it is doing now.
+		if (state != TrackerState.STOPPED) {
+			wakeLock.acquire();
+			service.startForegroundWithNotification();
 		} else {
-			service.log("Gps poked while SensorScheduler is stopped!");
+			wakeLock.release();
+			service.stopForeground(true);
 		}
+		
+		if (state == TrackerState.STOPPED) {
+			smallMovement.stop();
+			distanceCycledGps.switchToState(GpsState.OFF);
+			gpsTracking = false;
+		} else if (state == TrackerState.BACKGROUND) {
+			smallMovement.stop();
+			distanceCycledGps.switchToState(GpsState.HIGH);
+			gpsTracking = true;
+		} else {
+			smallMovement.stop();
+			distanceCycledGps.switchToState(GpsState.LOCK_HIGH);
+			gpsTracking = true;
+		}
+		
 	}
 
 	/// Callbacks from sensors
 
 	public synchronized void maybeSmallMovement() {
-		if (running) {
+		if (state == TrackerState.BACKGROUND) {
 			if (!gpsTracking) {
 				smallMovement.stop();
-				distanceCycledGps.start();
+				distanceCycledGps.switchToState(GpsState.HIGH);
 				gpsTracking = true;
 			}
 		}
 	}
 
 	public synchronized void noGpsMovement() {
-		if (running) {
+		if (state == TrackerState.BACKGROUND) {
 			if (gpsTracking) {
-				smallMovement.start();
-				distanceCycledGps.stop();
+				distanceCycledGps.switchToState(GpsState.OFF);
+				smallMovement.start();				
 				gpsTracking = false;
 			}
 		}

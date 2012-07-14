@@ -3,7 +3,7 @@ package com.linnap.locationtracker;
 
 public class ExpectedState {
 
-	public enum State { STOPPED, BACKGROUND, FULL_GPS };
+	public enum TrackerState { STOPPED, BACKGROUND, GPS_LOCKED };
 	
 	boolean background;
 	int gpsLockCount;
@@ -22,18 +22,15 @@ public class ExpectedState {
 			++gpsLockCount;
 		else if (LocationTrackerService.ACTION_UNLOCK_GPS.equals(action))
 			--gpsLockCount;
-		
-		if (gpsLockCount < 0)
-			gpsLockCount = 0;
 	}	
 	
-	public synchronized State getExpectedState() {
+	public synchronized TrackerState getExpectedState() {
 		if (gpsLockCount > 0)
-			return State.FULL_GPS;
+			return TrackerState.GPS_LOCKED;
 		else if (background)
-			return State.BACKGROUND;
+			return TrackerState.BACKGROUND;
 		else
-			return State.STOPPED;
+			return TrackerState.STOPPED;
 	}
 	
 }
