@@ -11,6 +11,7 @@ import android.os.SystemClock;
 
 import com.linnap.locationtracker.LocationTrackerService;
 import com.linnap.locationtracker.SensorConfig;
+import com.linnap.locationtracker.StateChange;
 
 public class DistanceCycledGps implements LocationListener {
 
@@ -40,13 +41,7 @@ public class DistanceCycledGps implements LocationListener {
 	}
 	
 	public synchronized void switchToState(GpsState newState) {
-		switch (newState) {
-			case OFF: service.event("gps_off"); break;
-			case LOW: service.event("gps_low"); break;
-			case HIGH: service.event("gps_high"); break;
-			case LOCK_HIGH: service.event("gps_lock_high"); break;
-		}
-		service.log("GPS switching from " + state + " to " + newState);
+		service.event("gps_state", new StateChange(state, newState));
 		state = newState;
 		
 		history.clear();  // Must clear history, to make sure the new history is based on expected fix frequency.

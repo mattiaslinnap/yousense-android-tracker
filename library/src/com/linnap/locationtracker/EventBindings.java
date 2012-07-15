@@ -44,7 +44,10 @@ public class EventBindings {
 	/**
 	 * Some sensor start/stop event. Default implementation logs the event tag.
 	 */
-	public void event(String tag) {
-		log("Event: " + tag);
+	public void event(String tag, Object extra) {
+		if (extra != null)
+			log("Event: " + tag + ", " + extra);
+		else
+			log("Event: " + tag);
 	}
 }

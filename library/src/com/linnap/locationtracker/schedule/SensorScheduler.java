@@ -8,6 +8,7 @@ import android.os.PowerManager.WakeLock;
 import com.linnap.locationtracker.ExpectedState.TrackerState;
 import com.linnap.locationtracker.LocationTrackerService;
 import com.linnap.locationtracker.SensorConfig;
+import com.linnap.locationtracker.StateChange;
 import com.linnap.locationtracker.gps.DistanceCycledGps;
 import com.linnap.locationtracker.gps.DistanceCycledGps.GpsMovementListener;
 import com.linnap.locationtracker.gps.DistanceCycledGps.GpsState;
@@ -37,7 +38,8 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 	}
 	
 	public synchronized void switchToState(TrackerState newState) {
-		// TODO: events
+		service.event("schedule_state", new StateChange(state, newState));
+		state = newState;
 		
 		if (state != TrackerState.STOPPED) {
 			wakeLock.acquire();

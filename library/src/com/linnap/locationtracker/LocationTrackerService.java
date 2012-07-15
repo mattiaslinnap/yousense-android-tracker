@@ -4,10 +4,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
+import com.linnap.locationtracker.ExpectedState.TrackerState;
 import com.linnap.locationtracker.gps.LocationFix;
 import com.linnap.locationtracker.schedule.SensorScheduler;
 
-public class LocationTrackerService extends Service {
+abstract public class LocationTrackerService extends Service {
 
 	//// Send these actions with startService()
 	public static final String ACTION_START_BACKGROUND = "com.linnap.locationtracker.intent.ACTION_START_BACKGROUND";
@@ -17,9 +18,7 @@ public class LocationTrackerService extends Service {
 	public static final String ACTION_MOCK_FIX = "com.linnap.locationtracker.intent.ACTION_MOCK_FIX";
 	
 	//// Binding API. Override this with custom EventBindings to link to the location tracker.
-	public EventBindings getEventBindings() {
-		return new EventBindings();
-	};
+	abstract public EventBindings getEventBindings();
 	
 	//// Static API. Get static info on current state.
 	public static final LocationFix getLastGoodFix() {
@@ -51,6 +50,8 @@ public class LocationTrackerService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		expectedState.intentReceived(intent.getAction());
 		sensorScheduler.switchToState(expectedState.getExpectedState());
+		if (expectedState.getExpectedState() == TrackerState.STOPPED)
+			lastGoodFix = null;
 		
 		if (ACTION_MOCK_FIX.equals(intent.getAction())) {
 			mockGpsFix(new LocationFix(intent.getExtras()));
@@ -73,12 +74,11 @@ public class LocationTrackerService extends Service {
 	
 	public void mockGpsFix(LocationFix fix) {
 		fix.provider = "mock";
-		event("gps_mock");
 		gpsFix(fix);
 	}
 	
-	public void event(String tag) {
-		eventBindings.event(tag);
+	public void event(String tag, Object extra) {
+		eventBindings.event(tag, extra);
 	}
 	
 	public void log(String message) {
