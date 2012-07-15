@@ -41,22 +41,30 @@ public class DistanceCycledGps implements LocationListener {
 	}
 	
 	public synchronized void switchToState(GpsState newState) {
-		service.event("gps_state", new StateChange(state, newState));
-		state = newState;
-		
-		history.clear();  // Must clear history, to make sure the new history is based on expected fix frequency.
-		advanceGiveupTimer();
-		handler.removeCallbacks(giveupTimer);
-		locationManager.removeUpdates(this);  // TODO: don't do this unless actually changing delay.
-		
-		// OFF and LOCK_HIGH do not have giveup timers.		
-		if (stateHasGiveup(state)) {
-			handler.postDelayed(giveupTimer, SensorConfig.GPS_GIVEUP_CHECK_DELAY);
-		}
-		
-		if (state != GpsState.OFF) {
-			long interval = (state == GpsState.LOW ? SensorConfig.GPS_LOWSPEED_DELAY_MILLIS : SensorConfig.GPS_HIGHSPEED_DELAY_MILLIS);
-			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval, 0.0f, this);
+		if (state != newState) {
+			service.event("gps_state", new StateChange(state, newState));
+			
+			history.clear();  // Must clear history, to make sure the new history is based on expected fix frequency.
+			advanceGiveupTimer();
+			handler.removeCallbacks(giveupTimer);
+						
+			// OFF and LOCK_HIGH do not have giveup timers.		
+			if (stateHasGiveup(state)) {
+				handler.postDelayed(giveupTimer, SensorConfig.GPS_GIVEUP_CHECK_DELAY);
+			}
+			
+			if (newState == GpsState.OFF) {
+				locationManager.removeUpdates(this);
+			} else {
+				long interval = stateGpsInterval(state);
+				long newInterval = stateGpsInterval(newState);
+				if (interval != newInterval) {
+					locationManager.removeUpdates(this);
+					locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, newInterval, 0.0f, this);
+				}
+			}
+			
+			state = newState;
 		}
 	}
 	
@@ -138,5 +146,15 @@ public class DistanceCycledGps implements LocationListener {
 	
 	private static final boolean stateHasHistory(GpsState state) {
 		return state == GpsState.LOW || state == GpsState.HIGH;
+	}
+	
+	private static final long stateGpsInterval(GpsState state) {
+		switch (state) {
+			case OFF: return -1;
+			case LOW: return SensorConfig.GPS_LOWSPEED_DELAY_MILLIS;
+			case HIGH: return SensorConfig.GPS_HIGHSPEED_DELAY_MILLIS;
+			case LOCK_HIGH: return SensorConfig.GPS_HIGHSPEED_DELAY_MILLIS;
+			default: return -1;
+		}
 	}
 }

@@ -38,29 +38,29 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 	}
 	
 	public synchronized void switchToState(TrackerState newState) {
-		service.event("schedule_state", new StateChange(state, newState));
-		state = newState;
+		if (state != newState) {
+			service.event("schedule_state", new StateChange(state, newState));
 		
-		if (state != TrackerState.OFF) {
-			wakeLock.acquire();
-			service.startForegroundWithNotification();
-		} else {
-			wakeLock.release();
-			service.stopForeground(true);
-		}
+			if (state == TrackerState.OFF && newState != TrackerState.OFF) {
+				wakeLock.acquire();
+				service.startForegroundWithNotification();
+			} else if (state != TrackerState.OFF && newState == TrackerState.OFF){
+				wakeLock.release();
+				service.stopForeground(true);
+			}
 		
-		if (state == TrackerState.OFF) {
 			smallMovement.stop();
-			distanceCycledGps.switchToState(GpsState.OFF);
-			gpsTracking = false;
-		} else if (state == TrackerState.BACKGROUND) {
-			smallMovement.stop();
-			distanceCycledGps.switchToState(GpsState.HIGH);
-			gpsTracking = true;
-		} else {
-			smallMovement.stop();
-			distanceCycledGps.switchToState(GpsState.LOCK_HIGH);
-			gpsTracking = true;
+			if (newState == TrackerState.OFF) {				
+				distanceCycledGps.switchToState(GpsState.OFF);
+				gpsTracking = false;
+			} else if (newState == TrackerState.BACKGROUND) {
+				distanceCycledGps.switchToState(GpsState.HIGH);
+				gpsTracking = true;
+			} else {
+				distanceCycledGps.switchToState(GpsState.LOCK_HIGH);
+				gpsTracking = true;
+			}
+			state = newState;
 		}
 		
 	}

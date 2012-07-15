@@ -20,7 +20,7 @@ public class DutyCycledAccelerometer implements SensorEventListener {
 	SensorManager sensorManager;	
 	Sensor accelerometer;
 	StatsAccumulator magnitude;
-	boolean running;
+	BooleanState state;
 	
 	public DutyCycledAccelerometer(LocationTrackerService service, Handler handler, MovementDetectedListener listener) {
 		this.service = service;
@@ -29,25 +29,21 @@ public class DutyCycledAccelerometer implements SensorEventListener {
 		this.sensorManager = (SensorManager)service.getSystemService(Context.SENSOR_SERVICE);
 		this.accelerometer = this.sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		this.magnitude = new StatsAccumulator(SensorConfig.ACCELEROMETER_ACCUMULATOR_SIZE);
-		this.running = false;
+		this.state = BooleanState.OFF;
 	}
 	
 	public synchronized void start() {
-		service.event("dutycycledaccelerometer_state", new StateChange("OFF", "ON"));
-		running = true;
+		service.event("dutycycledaccelerometer_state", new StateChange(state, BooleanState.ON));
+		state = BooleanState.ON;
 		startAccelerometer.run();
 	}
 	
 	public synchronized void stop() {
-		service.event("dutycycledaccelerometer_state", new StateChange("ON", "OFF"));
-		running = false;
+		service.event("dutycycledaccelerometer_state", new StateChange(state, BooleanState.OFF));
+		state = BooleanState.OFF;
 		sensorManager.unregisterListener(DutyCycledAccelerometer.this);
 		handler.removeCallbacks(startAccelerometer);
 		handler.removeCallbacks(stopAccelerometer);
-	}
-	
-	public boolean isRunning() {
-		return running;
 	}
 	
 	/// Implementation.
@@ -55,7 +51,7 @@ public class DutyCycledAccelerometer implements SensorEventListener {
 	Runnable startAccelerometer = new Runnable() {
 		public void run() {
 			synchronized (DutyCycledAccelerometer.this) {
-				if (running) {
+				if (state == BooleanState.ON) {
 					service.event("accelerometer_state", new StateChange("OFF", "ON"));
 					magnitude.clear();
 					sensorManager.registerListener(DutyCycledAccelerometer.this, accelerometer, SensorConfig.ACCELEROMETER_RATE, handler);
@@ -68,7 +64,7 @@ public class DutyCycledAccelerometer implements SensorEventListener {
 	Runnable stopAccelerometer = new Runnable() {
 		public void run() {
 			synchronized (DutyCycledAccelerometer.this) {
-				if (running) {
+				if (state == BooleanState.ON) {
 					service.event("accelerometer_state", new StateChange("ON", "OFF"));
 					sensorManager.unregisterListener(DutyCycledAccelerometer.this);
 					if (magnitude.variance() >= SensorConfig.ACCELEROMETER_MAGNITUDE_VARIANCE_FOR_MOVEMENT) {

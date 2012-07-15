@@ -45,9 +45,9 @@ public class TimeoutScan {
 		} else {
 			scanStarted = true;
 			handler.postDelayed(timeout, SensorConfig.WIFI_SCAN_TIMEOUT_MILLIS);
-			service.registerReceiver(scanResultsReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION), null, handler);
-			service.event("wifi_scan_started", null);
-			wifiManager.startScan();  // If startScan() fails, still not calling listener right now. Perhaps easier to think about threads.			
+			service.registerReceiver(scanResultsReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION), null, handler);			
+			boolean success = wifiManager.startScan();  // If startScan() fails, still not calling listener right now. Perhaps easier to think about threads.
+			service.event("wifi_scan_started", new ScanStartedData(!success));
 			return this;
 		}
 	}
@@ -58,14 +58,14 @@ public class TimeoutScan {
 	
 	/// Implementation
 	
-	private synchronized void reportResults(List<ScanResult> results, boolean failed) {
-		service.event("wifi_scan_results", null);
+	private synchronized void reportResults(List<ScanResult> results, boolean failed) {		
 		if (!listenerCalled) {
 			listenerCalled = true;
 			// Unregister BroadcastReceiver only once
-			service.unregisterReceiver(scanResultsReceiver);
-			// Do not bother unregistering timeout handler.
+			service.unregisterReceiver(scanResultsReceiver);			
+			service.event("wifi_scan_results", new ScanResultsData(results, failed));
 			listener.wifiScanFinished(results, failed);
+			// Do not bother unregistering timeout handler.
 		} else {
 			// Listener already called. Ignoring double reports.
 		}

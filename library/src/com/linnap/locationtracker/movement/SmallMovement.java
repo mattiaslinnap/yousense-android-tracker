@@ -11,13 +11,13 @@ import com.linnap.locationtracker.wifi.WifiPlaceChange;
 import com.linnap.locationtracker.wifi.WifiPlaceChange.MaybePlaceChangedListener;
 
 public class SmallMovement implements MovementDetectedListener, MaybePlaceChangedListener {
-
+	
 	LocationTrackerService service;
 	Handler handler;
 	SmallMovementDistanceListener listener;
 	DutyCycledAccelerometer accel;
 	WifiPlaceChange placeChange;
-	boolean running;
+	BooleanState state;
 	int accelMovementPeriods;
 	
 	public SmallMovement(LocationTrackerService service, SmallMovementDistanceListener listener) {
@@ -28,13 +28,13 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 		if (SensorConfig.MOVEMENT_USES_WIFI) {
 			this.placeChange = new WifiPlaceChange(service, handler, this);
 		}
-		this.running = false;
+		this.state = BooleanState.OFF;
 		this.accelMovementPeriods = 0;
 	}
 	
 	public synchronized void start() {
-		service.event("smallmovement_state", new StateChange("OFF", "ON"));
-		running = true;
+		service.event("smallmovement_state", new StateChange(state, BooleanState.ON));
+		state = BooleanState.ON;
 		accelMovementPeriods = 0;
 		if (SensorConfig.MOVEMENT_USES_WIFI) {
 			placeChange.clearCheckpoint();
@@ -44,8 +44,8 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 	}
 	
 	public synchronized void stop() {
-		service.event("smallmovement_state", new StateChange("ON", "OFF"));
-		running = false;
+		service.event("smallmovement_state", new StateChange(state, BooleanState.OFF));
+		state = BooleanState.OFF;
 		accelMovementPeriods = 0;
 		if (SensorConfig.MOVEMENT_USES_WIFI) {
 			placeChange.clearCheckpoint();
@@ -60,7 +60,7 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 	/// Internal Sensor Callbacks
 	
 	public synchronized void movementDetected(long durationMillis) {
-		if (running) {
+		if (state == BooleanState.ON) {
 			service.log("SM movementDetected()");
 			accelMovementPeriods += 1;
 			if (accelMovementPeriods >= SensorConfig.MOVEMENT_MIN_ACCEL_MOVEMENT_PERIODS) {
@@ -79,7 +79,7 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 		if (!SensorConfig.MOVEMENT_USES_WIFI)
 			Log.wtf(SensorConfig.TAG, "MOVEMENT_USES_WIFI is off, but maybePlaceChanged() called");
 		
-		if (running) {
+		if (state == BooleanState.ON) {
 			if (changed) {
 				// Wifi agrees with place change. Report.
 				service.log("SM maybe WiFi change");
