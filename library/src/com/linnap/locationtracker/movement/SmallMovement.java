@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.linnap.locationtracker.LocationTrackerService;
 import com.linnap.locationtracker.SensorConfig;
+import com.linnap.locationtracker.StateChange;
 import com.linnap.locationtracker.movement.DutyCycledAccelerometer.MovementDetectedListener;
 import com.linnap.locationtracker.wifi.WifiPlaceChange;
 import com.linnap.locationtracker.wifi.WifiPlaceChange.MaybePlaceChangedListener;
@@ -32,6 +33,7 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 	}
 	
 	public synchronized void start() {
+		service.event("smallmovement_state", new StateChange("OFF", "ON"));
 		running = true;
 		accelMovementPeriods = 0;
 		if (SensorConfig.MOVEMENT_USES_WIFI) {
@@ -42,6 +44,7 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 	}
 	
 	public synchronized void stop() {
+		service.event("smallmovement_state", new StateChange("ON", "OFF"));
 		running = false;
 		accelMovementPeriods = 0;
 		if (SensorConfig.MOVEMENT_USES_WIFI) {

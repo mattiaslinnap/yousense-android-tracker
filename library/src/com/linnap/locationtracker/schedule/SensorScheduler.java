@@ -28,7 +28,7 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 	
 	public SensorScheduler(LocationTrackerService service) {
 		this.service = service;
-		this.state = TrackerState.STOPPED;
+		this.state = TrackerState.OFF;
 		
 		this.wakeLock = ((PowerManager)service.getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SensorConfig.TAG);
 		this.wakeLock.setReferenceCounted(false);
@@ -41,7 +41,7 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 		service.event("schedule_state", new StateChange(state, newState));
 		state = newState;
 		
-		if (state != TrackerState.STOPPED) {
+		if (state != TrackerState.OFF) {
 			wakeLock.acquire();
 			service.startForegroundWithNotification();
 		} else {
@@ -49,7 +49,7 @@ public class SensorScheduler implements SmallMovementDistanceListener, GpsMoveme
 			service.stopForeground(true);
 		}
 		
-		if (state == TrackerState.STOPPED) {
+		if (state == TrackerState.OFF) {
 			smallMovement.stop();
 			distanceCycledGps.switchToState(GpsState.OFF);
 			gpsTracking = false;

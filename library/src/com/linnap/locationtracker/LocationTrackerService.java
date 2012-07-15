@@ -50,7 +50,7 @@ abstract public class LocationTrackerService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		expectedState.intentReceived(intent.getAction());
 		sensorScheduler.switchToState(expectedState.getExpectedState());
-		if (expectedState.getExpectedState() == TrackerState.STOPPED)
+		if (expectedState.getExpectedState() == TrackerState.OFF)
 			lastGoodFix = null;
 		
 		if (ACTION_MOCK_FIX.equals(intent.getAction())) {

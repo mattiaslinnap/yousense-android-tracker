@@ -3,7 +3,7 @@ package com.linnap.locationtracker;
 
 public class ExpectedState {
 
-	public enum TrackerState { STOPPED, BACKGROUND, GPS_LOCKED };
+	public enum TrackerState { OFF, BACKGROUND, GPS_LOCKED };
 	
 	boolean background;
 	int gpsLockCount;
@@ -30,7 +30,7 @@ public class ExpectedState {
 		else if (background)
 			return TrackerState.BACKGROUND;
 		else
-			return TrackerState.STOPPED;
+			return TrackerState.OFF;
 	}
 	
 }

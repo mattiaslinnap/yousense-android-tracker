@@ -11,6 +11,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 
+import com.linnap.locationtracker.LocationTrackerService;
 import com.linnap.locationtracker.SensorConfig;
 
 /**
@@ -19,17 +20,17 @@ import com.linnap.locationtracker.SensorConfig;
  */
 public class TimeoutScan {
 
-	Context context;
+	LocationTrackerService service;
 	Handler handler;
 	WifiManager wifiManager;	
 	WifiScanFinished listener;
 	boolean scanStarted;
 	boolean listenerCalled;
 	
-	public TimeoutScan(Context context, Handler handler, WifiScanFinished listener) {
-		this.context = context;
+	public TimeoutScan(LocationTrackerService service, Handler handler, WifiScanFinished listener) {
+		this.service = service;
 		this.handler = handler;
-		this.wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
+		this.wifiManager = (WifiManager)service.getSystemService(Context.WIFI_SERVICE);
 		this.listener = listener;
 		this.scanStarted = false;
 		this.listenerCalled = false;
@@ -44,7 +45,8 @@ public class TimeoutScan {
 		} else {
 			scanStarted = true;
 			handler.postDelayed(timeout, SensorConfig.WIFI_SCAN_TIMEOUT_MILLIS);
-			context.registerReceiver(scanResultsReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION), null, handler);
+			service.registerReceiver(scanResultsReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION), null, handler);
+			service.event("wifi_scan_started", null);
 			wifiManager.startScan();  // If startScan() fails, still not calling listener right now. Perhaps easier to think about threads.			
 			return this;
 		}
@@ -57,10 +59,11 @@ public class TimeoutScan {
 	/// Implementation
 	
 	private synchronized void reportResults(List<ScanResult> results, boolean failed) {
+		service.event("wifi_scan_results", null);
 		if (!listenerCalled) {
 			listenerCalled = true;
 			// Unregister BroadcastReceiver only once
-			context.unregisterReceiver(scanResultsReceiver);
+			service.unregisterReceiver(scanResultsReceiver);
 			// Do not bother unregistering timeout handler.
 			listener.wifiScanFinished(results, failed);
 		} else {

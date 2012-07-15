@@ -2,10 +2,10 @@ package com.linnap.locationtracker.wifi;
 
 import java.util.List;
 
-import android.content.Context;
 import android.net.wifi.ScanResult;
 import android.os.Handler;
 
+import com.linnap.locationtracker.LocationTrackerService;
 import com.linnap.locationtracker.SensorConfig;
 import com.linnap.locationtracker.wifi.TimeoutScan.WifiScanFinished;
 
@@ -16,15 +16,15 @@ import com.linnap.locationtracker.wifi.TimeoutScan.WifiScanFinished;
  */
 public class WifiPlaceChange {
 
-	Context context;
+	LocationTrackerService service;
 	Handler handler;
 	MaybePlaceChangedListener listener;
 	WifiFingerprint checkpoint;
 	TimeoutScan checkpointScan;
 	TimeoutScan placeChangedScan;
 	
-	public WifiPlaceChange(Context context, Handler handler, MaybePlaceChangedListener listener) {
-		this.context = context;
+	public WifiPlaceChange(LocationTrackerService service, Handler handler, MaybePlaceChangedListener listener) {
+		this.service = service;
 		this.handler = handler;
 		this.listener = listener;
 		this.checkpoint = null;
@@ -44,7 +44,7 @@ public class WifiPlaceChange {
 	 */
 	public synchronized void startCheckpoint() {		
 		if (checkpointScan == null) {
-			checkpointScan = new TimeoutScan(context, handler, new WifiScanFinished() {
+			checkpointScan = new TimeoutScan(service, handler, new WifiScanFinished() {
 				public void wifiScanFinished(List<ScanResult> results, boolean failed) {
 					updateCheckpoint(results, failed);
 				}
@@ -60,7 +60,7 @@ public class WifiPlaceChange {
 	public synchronized void startComparison() {
 		// TODO: Consider optimising for no checkpoint. Could fire maybePlaceChanged(true) immediately.
 		if (placeChangedScan == null) {
-			placeChangedScan = new TimeoutScan(context, handler, new WifiScanFinished() {
+			placeChangedScan = new TimeoutScan(service, handler, new WifiScanFinished() {
 				public void wifiScanFinished(List<ScanResult> results, boolean failed) {
 					updatePlaceChanged(results, failed);
 				}
