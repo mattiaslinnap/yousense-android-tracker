@@ -52,7 +52,6 @@ public class DutyCycledAccelerometer implements SensorEventListener {
 		public void run() {
 			synchronized (DutyCycledAccelerometer.this) {
 				if (state == BooleanState.ON) {
-					service.event("accelerometer_state", new StateChange("OFF", "ON"));
 					magnitude.clear();
 					sensorManager.registerListener(DutyCycledAccelerometer.this, accelerometer, SensorConfig.ACCELEROMETER_RATE, handler);
 					handler.postDelayed(stopAccelerometer, SensorConfig.ACCELEROMETER_ACTIVE_MILLIS);
@@ -65,12 +64,11 @@ public class DutyCycledAccelerometer implements SensorEventListener {
 		public void run() {
 			synchronized (DutyCycledAccelerometer.this) {
 				if (state == BooleanState.ON) {
-					service.event("accelerometer_state", new StateChange("ON", "OFF"));
-					sensorManager.unregisterListener(DutyCycledAccelerometer.this);
-					if (magnitude.variance() >= SensorConfig.ACCELEROMETER_MAGNITUDE_VARIANCE_FOR_MOVEMENT) {
-						// Worst-case estimate of duration includes sleep time.
-						long duration = SensorConfig.ACCELEROMETER_ACTIVE_MILLIS + SensorConfig.ACCELEROMETER_SLEEP_MILLIS;
-						listener.movementDetected(duration);						
+					sensorManager.unregisterListener(DutyCycledAccelerometer.this);					
+					float variance = magnitude.variance();
+					if (variance >= SensorConfig.ACCELEROMETER_MAGNITUDE_VARIANCE_FOR_MOVEMENT) {
+						service.event("accelerometer_movement", new AccelerometerData(variance));
+						listener.movementDetected();						
 					}
 					handler.postDelayed(startAccelerometer, SensorConfig.ACCELEROMETER_SLEEP_MILLIS);
 				}
@@ -89,6 +87,6 @@ public class DutyCycledAccelerometer implements SensorEventListener {
 	/// Callbacks
 	
 	public interface MovementDetectedListener {
-		public void movementDetected(long durationMillis);
+		public void movementDetected();
 	}
 }

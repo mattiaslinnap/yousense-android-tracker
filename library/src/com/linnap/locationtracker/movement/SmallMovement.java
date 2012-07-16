@@ -59,7 +59,7 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 
 	/// Internal Sensor Callbacks
 	
-	public synchronized void movementDetected(long durationMillis) {
+	public synchronized void movementDetected() {
 		if (state == BooleanState.ON) {
 			service.log("SM movementDetected()");
 			accelMovementPeriods += 1;
