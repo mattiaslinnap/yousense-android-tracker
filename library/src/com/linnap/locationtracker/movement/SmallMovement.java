@@ -61,7 +61,6 @@ public class SmallMovement implements MovementDetectedListener, MaybePlaceChange
 	
 	public synchronized void movementDetected() {
 		if (state == BooleanState.ON) {
-			service.log("SM movementDetected()");
 			accelMovementPeriods += 1;
 			if (accelMovementPeriods >= SensorConfig.MOVEMENT_MIN_ACCEL_MOVEMENT_PERIODS) {
 				if (SensorConfig.MOVEMENT_USES_WIFI) {
