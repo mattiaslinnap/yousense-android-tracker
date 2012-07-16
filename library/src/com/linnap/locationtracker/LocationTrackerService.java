@@ -3,6 +3,7 @@ package com.linnap.locationtracker;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.linnap.locationtracker.ExpectedState.TrackerState;
 import com.linnap.locationtracker.gps.LocationFix;
@@ -48,16 +49,25 @@ abstract public class LocationTrackerService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		expectedState.intentReceived(intent.getAction());
-		sensorScheduler.switchToState(expectedState.getExpectedState());
-		if (expectedState.getExpectedState() == TrackerState.OFF)
-			lastGoodFix = null;
-		
-		if (ACTION_MOCK_FIX.equals(intent.getAction())) {
-			mockGpsFix(new LocationFix(intent.getExtras()));
+		if (expectedState != null && sensorScheduler != null) {
+			expectedState.intentReceived(intent.getAction());
+			sensorScheduler.switchToState(expectedState.getExpectedState());
+			if (expectedState.getExpectedState() == TrackerState.OFF)
+				lastGoodFix = null;
+			
+			if (ACTION_MOCK_FIX.equals(intent.getAction())) {
+				mockGpsFix(new LocationFix(intent.getExtras()));
+			}
+		} else {
+			if (eventBindings != null) {
+				eventBindings.log("LocationTrackerService restarted, with state gone!");
+				Log.wtf(SensorConfig.TAG, "LocationTrackerService restarted, with state gone!");
+				// TODO: check the logs for this
+			}
+			
 		}
 		
-		return START_STICKY;
+		return START_NOT_STICKY;
 	}	
 	
 	@Override
