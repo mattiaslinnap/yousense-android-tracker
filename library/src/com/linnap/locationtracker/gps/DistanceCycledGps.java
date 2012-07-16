@@ -49,7 +49,7 @@ public class DistanceCycledGps implements LocationListener {
 			handler.removeCallbacks(giveupTimer);
 						
 			// OFF and LOCK_HIGH do not have giveup timers.		
-			if (stateHasGiveup(state)) {
+			if (stateHasGiveup(newState)) {
 				handler.postDelayed(giveupTimer, SensorConfig.GPS_GIVEUP_CHECK_DELAY);
 			}
 			
