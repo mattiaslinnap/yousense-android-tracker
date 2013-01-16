@@ -5,8 +5,8 @@ import java.util.List;
 
 import com.linnap.locationtracker.SensorConfig;
 
-import uk.ac.cam.cl.dtg.androidshortcuts.Sets;
 import android.net.wifi.ScanResult;
+import com.linnap.locationtracker.Sets;
 
 public class WifiFingerprint {
 
