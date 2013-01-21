@@ -4,6 +4,7 @@
           android:versionCode="1"
           android:versionName="1.0">
 
-    <application android:label="yousense-tracker-android">
+    <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="17"/>
+    <application android:label="yousense-android-tracker">
     </application>
 </manifest>
